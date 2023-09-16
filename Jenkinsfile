@@ -19,7 +19,7 @@ pipeline {
                     jfrogServer.newRepository(
                         serverId: 'my-jfrog-credentials',
                         repoKey: repositoryName,
-                        description: "Repository created on ${currentDate} ${currentTime} with code ${code}",
+                        description: "Repository created on ${currentDate} ${currentTime} with code ",
                         packageType: 'generic',
                         notes: "Repository created by Jenkins"
                     )
