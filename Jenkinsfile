@@ -11,7 +11,7 @@ pipeline {
                     // Create a directory with today's date in Artifactory
                     def today = new Date().format("yyyy-MM-dd")
                     def codeDirectoryName = "code/${today}" // Modify the directory structure as needed
-                    def serverId = 'Your_Artifactory_Server_Id' // Replace with your configured Artifactory server ID
+                    def serverId = 'Artifactory' // Replace with your configured Artifactory server ID
                     def createDirectorySpec = """{
                         "files": [
                             {
