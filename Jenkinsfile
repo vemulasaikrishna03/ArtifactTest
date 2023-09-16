@@ -17,7 +17,7 @@ pipeline {
 
                     // Create the repository
                     jfrogServer.newRepository(
-                        serverId: 'my-jfrog-credentials',
+                        serverId: 'Artifactory',
                         repoKey: repositoryName,
                         description: "Repository created on ${currentDate} ${currentTime} with code ",
                         packageType: 'generic',
