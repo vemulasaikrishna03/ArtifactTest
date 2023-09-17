@@ -1,59 +1,95 @@
 pipeline {
     agent any
-
+    tools{
+        ant '1.10.14'
+    }
     stages {
-        stage('Install JFrog CLI') {
+        stage('Checkout Code') {
             steps {
-                script {
-                    // Define the URL to download the JFrog CLI
-                    def jfrogCliUrl = 'https://releases.jfrog.io/artifactory/jfrog-cli/v2-jfrog-cli-windows-amd64/jfrog.exe'
-
-                    // Define the path where you want to install the JFrog CLI
-                    def installPath = "${env:USERPROFILE}\\Downloads\\jfrog.exe"
-
-                    // Download the JFrog CLI
-                    powershell """
-                    Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr $jfrogCliUrl -OutFile $installPath'
-                    """
-
-                    // Verify the installation
-                    powershell """
-                    $installedVersion = & $installPath --version
-                    Write-Host "Installed JFrog CLI version: $installedVersion"
-                    """
-                }
-            }
-            
-        }
-
-        stage('Create Repository') {
-            steps {
-                script {
-                    // Define your code, today's date, and today's time
-                    def code = "your_code_here"  // Replace with your desired code
-                    def currentDate = new Date().format('yyyyMMdd')
-                    def currentTime = new Date().format('HHmmss')
-
-                    // Construct the repository name
-                    def repositoryName = "${code}_${currentDate}_${currentTime}"
-
-                    // Configure Artifactory server details (update with your server details)
-                    def artifactoryServerUrl = 'https://your-artifactory-instance/artifactory'
-                    def artifactoryRepoKey = 'your-artifactory-repo-key'
-                    def artifactoryUsername = 'your-username'
-                    def artifactoryPassword = 'your-password'
-
-                    // Create the repository using JFrog CLI
-                    def createRepoCmd = "jfrog rt rc --url='${artifactoryServerUrl}' --user='${artifactoryUsername}' --password='${artifactoryPassword}'"
-                    def createRepoCmdArgs = "create-repo ${repositoryName} ${artifactoryRepoKey}"
-
-                    sh "${createRepoCmd} ${createRepoCmdArgs}"
-                }
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'main']],  
+                    userRemoteConfigs: [[url: 'https://github.com/vemulasaikrishna03/Venkys.io.git']], 
+                ])
             }
         }
+        stage('Code Execution') {
+            steps {
+                script {
+                    def codeDir = './folder1'
+                    def javaFiles = getChangedFiles(codeDir, '**/*.java')
+                    def cppFiles = getChangedFiles(codeDir, '**/*.cpp')
+                    def pythonFiles = getChangedFiles(codeDir, '**/*.py')
 
-        // Add additional stages for your pipeline
+                    if (javaFiles) {
+                        echo "Java code changes detected in the following files:"
+                        echo javaFiles.join('\n')
+
+                        for (def file : javaFiles) {
+                            def className = file.replaceAll('.*/(.*).java', '$1')
+                            def buildpath = 'Java/build.xml'
+                            try {
+                                bat "ant -f $buildpath -Djava.file=$file -Dmain.class=$className compile"
+                                echo "Java code in $file compiled successfully."
+                                // TODO Store .class files in the Artifactory director
+                            } catch (Exception e) {
+                                error "Error in $file: $e.getMessage()"
+                            }
+                        }
+                    } else {
+                        echo "No Java code changes detected in known code directories."
+                    }
+
+                    if (cppFiles) {
+                        echo "C++ code changes detected in the following files:"
+                        echo cppFiles.join('\n')
+
+                        for (def file : cppFiles) {
+                            // TODO Execute C++ code here (similar to the previous stage)
+                            // ...
+                            // Store .exe files in the Artifactory directory
+                        }
+                    } else {
+                        echo "No C++ code changes detected in known code directories."
+                    }
+
+                    if (pythonFiles) {
+                        echo "Python code changes detected in the following files:"
+                        echo pythonFiles.join('\n')
+
+                        for (def file : pythonFiles) {
+                            def result = bat(script: "python $file", returnStatus: true)
+                            if (result == 0) {
+                                echo "Success: Python script executed successfully."
+                                //TODO Store .py files in the Artifactory directory
+                            } else {
+                                error "Failure: Python script execution failed with exit code $result."
+                            }
+                        }
+                    } else {
+                        echo "No Python code changes detected in known code directories."
+                    }
+                }
+            }
+        }
     }
 
-    // Add post-build actions or other pipeline configurations
+    post {
+        always {
+           //TODO:mail part here 
+        }
+    }
+}
+
+@NonCPS
+List<String> getChangedFiles(String directory, String filePattern) {
+    def changedFiles = []
+    for (changeLogSet in currentBuild.changeSets) {
+        for (entry in changeLogSet.getItems()) {
+            if (entry.affectedPaths.any { it.startsWith(directory) && it.endsWith(filePattern) }) {
+                changedFiles.add(entry.filePath)
+            }
+        }
+    }
+    return changedFiles
 }
