@@ -4,15 +4,13 @@ pipeline {
         ant '1.10.14'
     }
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: 'main']],  
-                    userRemoteConfigs: [[url: 'https://github.com/vemulasaikrishna03/Venkys.io.git']], 
-                ])
+                
+                checkout scm
             }
         }
+
         stage('Code Execution') {
             steps {
                 script {
