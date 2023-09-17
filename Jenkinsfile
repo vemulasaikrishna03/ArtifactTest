@@ -31,7 +31,7 @@ pipeline {
                             try {
                                 bat "ant -f $buildpath -Djava.file=$file -Dmain.class=$className compile"
                                 echo "Java code in $file compiled successfully."
-                                // TODO Store .class files in the Artifactory director
+                                // TODO Store .class files in the Artifactory director  ghfht
                             } catch (Exception e) {
                                 error "Error in $file: $e.getMessage()"
                             }
